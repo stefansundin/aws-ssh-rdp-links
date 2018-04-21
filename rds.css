@@ -1,0 +1,13 @@
+.awssshrdplink {
+  margin-left: 1em;
+}
+td .awssshrdplink {
+  float: right;
+}
+.awssshrdplink.cluster {
+  line-height: 30px;
+}
+
+.awssshrdplink::after {
+  content: attr(data-link-text);
+}

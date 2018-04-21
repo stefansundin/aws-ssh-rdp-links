@@ -1,0 +1,6 @@
+.awssshrdplink {
+  margin-left: 1em;
+}
+.awssshrdplink::after {
+  content: attr(data-link-text);
+}

@@ -1,15 +1,7 @@
-# AWS SSH and RDP Links
-https://chrome.google.com/webstore/detail/aws-ssh-rdp-links/hgholhakdlbjengncomcankfpfkjdpdh
+This is my personal fork with some big changes that you will find hard to use:
+- In the EC2 console, it converts the instance id and name tag to SSH links.
+- It adds SSH links to RDS and Redshift.
 
-### Adds SSH or RDP links to your AWS console
+Since you obviously cannot SSH to e.g. RDS, you need to use a terminal that can intercept the command and detect if the hostname is an RDS database or Redshift database.
 
-This chrome extension looks at the Platform field and if it says 'windows' then it adds RDP links to all the applicable fields that have IPs or hostnames.
-Otherwise, it adds SSH links to all the fields.
-
-### RDP Link Style
-- **MS** uses a link like rdp://full%20address=s:HOST:3389&username=s:USER - this works for the Microsoft RDP clients. Full documentation is here: https://technet.microsoft.com/en-us/library/dn690096.aspx
-- **CoRD** uses a link like rdp://USER@HOST - and is good for OSX's CoRD. Full documentation here: https://github.com/dorianj/CoRD/wiki/Command-Line-Use
-
-
-### Thanks to
-- stefansundin for rewriting a bunch of stuff when I didnt have time
+I use [iTerm2 with my own patch](https://github.com/stefansundin/iTerm2) to run a bash script when I click SSH links.
