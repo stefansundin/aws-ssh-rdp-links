@@ -52,34 +52,55 @@ function go() {
   if (!window.location.hash.startsWith("#Instances:")) return
 
   var active_tab = document.querySelector(".gwt-TabLayoutPanelContent > div:not([aria-hidden])")
-  if (!active_tab || active_tab.children.length == 0 || active_tab.children[0].tagName == "UL") {
-    // multiple instances are selected
-    return
-  }
+  if (!active_tab) return
 
-  var elastic_ips = get_selector(5, 1)
-  if (elastic_ips) {
-    var list_items = elastic_ips.getElementsByTagName("li")
-    for (var i=0; i < list_items.length; i++) {
-      add_to_element(list_items[i])
+  if (active_tab.children.length == 1 && active_tab.children[0].tagName == "UL") {
+    // multiple instances are selected
+    var items = active_tab.getElementsByTagName("li")
+    for (var i=0; i < items.length; i++) {
+      add_to_element(items[i])
     }
   }
+  else {
+    // a single instance is selected
+    var elastic_ips = get_selector(5, 1)
+    if (elastic_ips) {
+      var list_items = elastic_ips.getElementsByTagName("li")
+      for (var i=0; i < list_items.length; i++) {
+        add_to_element(list_items[i])
+      }
+    }
 
-  add_to_element(get_selector(2, 2)) // Public DNS (IPv4)
-  add_to_element(get_selector(3, 2)) // IPv4 Public IP
-  add_to_element(get_selector(4, 2)) // IPv6 IPs
-  add_to_element(get_selector(5, 2)) // Private DNS
-  add_to_element(get_selector(6, 2)) // Private IPs
-  add_to_element(get_selector(7, 2)) // Secondary private IPs
+    add_to_element(get_selector(2, 2)) // Public DNS (IPv4)
+    add_to_element(get_selector(3, 2)) // IPv4 Public IP
+    add_to_element(get_selector(4, 2)) // IPv6 IPs
+    add_to_element(get_selector(5, 2)) // Private DNS
+    add_to_element(get_selector(6, 2)) // Private IPs
+    add_to_element(get_selector(7, 2)) // Secondary private IPs
+  }
 
   // Top bar "Public DNS" / "Private IP" / "Elastic IP"
+  // This works for both one instance selected and multiple instances
   var instance = document.querySelector("span[style^='padding-left: 5px;']")
   if (instance) {
-    add_to_element(instance.parentNode.lastChild)
+    if (instance.textContent.trim() == "Instance:") {
+      instance = instance.nextElementSibling
+    }
+    while (instance) {
+      add_to_element(instance)
+      instance = instance.nextElementSibling
+    }
   }
 }
 
 function add_to_element(el) {
+  if (!el) return
+  if (el.nodeType == 3) {
+    var span = document.createElement("span")
+    el.parentNode.insertBefore(span, el)
+    span.appendChild(el)
+    el = span
+  }
   if (!el || el.querySelector(".awssshrdplink")) {
     // do not add multiple times
     return
@@ -90,6 +111,43 @@ function add_to_element(el) {
   if (text.endsWith(" IPs")) {
     // instances with multiple IPv6 addresses have a link that brings up a popup with the list of addresses ("2 IPs")
     return
+  }
+
+  var re
+  if ((re=/^i-[0-9a-f]{8,} \(.+\)$/.exec(text)) != null) {
+    // the part above the instance details has this format:
+    // i-01234567890abcdef (Name tag here)
+    var text = el.firstChild
+    var name = text.splitText(text.textContent.indexOf(" "))
+    add_to_element(text)
+    add_to_element(name)
+    return
+  }
+  else if ((re=/^\((.+)\)$/.exec(text)) != null) {
+    // the name element from above
+    text = re[1].replace(/ /g, "-")
+    text = text.replace(/[^a-zA-Z0-9\-.]/g, "") // only allow these characters
+  }
+  else if ((re=/^(i-[0-9a-f]{8,}): ?(.*)$/.exec(text)) != null) {
+    // this is the format that the list has when you select multiple instances:
+    // i-01234567890abcdef: ec2-50-70-40-60.compute-1.amazonaws.com
+    if (re[2]) {
+      var text = el.firstChild
+      var dns = text.splitText(text.textContent.indexOf(" "))
+      add_to_element(text)
+      add_to_element(dns)
+      return
+    }
+    else {
+      text = re[1]
+    }
+  }
+
+  if ((re=/^i-[0-9a-f]{8,}$/.exec(text)) != null) {
+    var meta_region = document.querySelector("meta[name='awsc-mezz-region']")
+    if (meta_region) {
+      text = `${text}-${meta_region.getAttribute("content")}`
+    }
   }
 
   if (text.startsWith("Private IP: ")) {
@@ -174,7 +232,7 @@ function get_ssh_user() {
     return "ec2-user"
   else if (ami.includes("suse-sles"))
     return "ec2-user"
-  else if (ami.includes("CoreOS"))
+  else if (ami.toLowerCase().includes("coreos"))
     return "core"
   else if (ami.includes("VyOS"))
     return "vyos"
