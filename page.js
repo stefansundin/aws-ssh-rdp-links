@@ -143,7 +143,7 @@ function add_to_element(el) {
   else {
     link.setAttribute("data-link-text", "SSH")
     var user = get_ssh_user()
-    link.href = "ssh://"+(user?`${user}@`:"")+encodeURIComponent(text)
+    link.href = "ssh://"+(user?`${user}@`:"")+text
   }
 
   el.classList.add("awssshrdp-element")
